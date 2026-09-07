@@ -108,9 +108,6 @@ To build into `./public` locally, without deploying anything:
 python3 tools/build_repo.py
 ```
 
-`tools/make_icon.py` draws the repository add-on icon and writes it to
-`src/repository.kodi.ksooo/icon.png`.
-
 ## License
 
 GPL-2.0-or-later, see [LICENSE.txt](LICENSE.txt).
