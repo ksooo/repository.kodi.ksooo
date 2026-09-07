@@ -30,12 +30,8 @@ The repository add-on itself is part of the repository as well, so it can update
 
 ## Releasing a new add-on version
 
-Every add-on lives in its own repository and is published from a git tag that `addons.json` pins.
-A release therefore touches two repositories.
-
-### 1. In the add-on's own repository
-
-Raise the version and describe the change, both in `addon.xml`:
+Everything after the tag happens on its own. In the add-on's own repository, raise the version and
+describe the change, both in `addon.xml`:
 
 ```xml
 <addon id="plugin.video.notinlibrary" version="1.1.0" ...>
@@ -52,34 +48,36 @@ git tag -a v1.1.0 -m "1.1.0"
 git push && git push origin v1.1.0
 ```
 
-### 2. In this repository
+That is the whole release. `addons.json` pins every add-on to `latest`, so the build resolves the
+highest version tag of each add-on repository on its own. The workflow here runs hourly, picks up
+the new tag, packs it and deploys. To skip the wait, run *Build repository* from the *Actions* tab.
 
-Point the add-on's `ref` in `addons.json` at the new tag, and push:
+The tag has to agree with `addon.xml`: a `v1.1.0` whose `addon.xml` still says 1.0.0 fails the
+build. Missing the version bump would otherwise release nothing at all and stay quiet about it, as
+the zip would keep its name and no client would see a new version.
 
-```sh
-git commit -am "plugin.video.notinlibrary 1.1.0"
-git push
-```
-
-That push runs the *Build repository* workflow: it checks out the pinned tag of every add-on, packs
-each one, rebuilds `addons.xml` and deploys the result to GitHub Pages. It takes about a minute,
-and the *Actions* tab shows whether it worked.
-
-Nothing else is needed. The index has changed, so the next update check on an installed Kodi offers
-the new version.
-
-### Two things that go wrong silently
-
-* **The version in `addon.xml` has to be raised.** Without it the zip keeps its name, `addons.xml`
-  stays as it was, and no client notices anything.
-* **Push the tag before pushing `addons.json`.** Otherwise the checkout in the workflow fails. That
-  is loud rather than silent - the run turns red and nothing is deployed - but the release is not
-  out until the tag is there.
+To publish something other than the newest tag, write that tag into `addons.json` in place of
+`latest`.
 
 ### Adding a new add-on
 
-Add an object with its `id`, clone `url` and `ref` to `addons.json` and push. The add-on needs no
+Add an object with its `id`, clone `url` and `ref` to `addons.json`, and push. The add-on needs no
 knowledge of this repository, and nothing in its own repository has to change.
+
+## When users see the update
+
+Kodi checks each repository once a day, so a release reaches an idle installation within 24 hours.
+*Add-ons ▸ Check for updates* fetches it right away. A repository cannot shorten that interval from
+its side - the header Kodi honours for it is not one GitHub Pages can send.
+
+What the user then sees is a matter of two Kodi settings, not of this repository:
+
+| *Settings ▸ System ▸ Add-ons ▸ Updates* | *Show notifications* | Result |
+| --- | --- | --- |
+| Install updates automatically (default) | off (default) | The add-on is updated silently, and the event log records it |
+| Install updates automatically | on | The add-on is updated, with a notification per add-on |
+| Notify, but don't install updates | – | A notification, and the update waits to be confirmed |
+| Never check for updates | – | Nothing, until the user looks for updates by hand |
 
 ## How it is built
 
@@ -101,6 +99,14 @@ add-on version always builds into a byte identical zip.
 
 Development material - `tests/`, `tools/`, `.github/`, `__pycache__/` and the like - is left out of
 the archives, so the add-on repositories need no packaging tooling of their own.
+
+Nothing is deployed when the built `addons.xml` matches the published one, so the workflow history
+shows the runs that really released something. *Run workflow* offers a `force` switch for the rare
+case where a deploy has to be repeated anyway.
+
+The hourly schedule is what picks up a new tag. GitHub disables scheduled workflows in repositories
+that see no pushes for 60 days, so after two quiet months the schedule has to be switched back on
+in the *Actions* tab - or the first release after such a pause started by hand.
 
 To build into `./public` locally, without deploying anything:
 

@@ -3,17 +3,17 @@
     {
       "id": "plugin.video.notinlibrary",
       "url": "https://github.com/ksooo/plugin.video.notinlibrary.git",
-      "ref": "v1.0.0"
+      "ref": "latest"
     },
     {
       "id": "script.homeassistant",
       "url": "https://github.com/ksooo/script.homeassistant.git",
-      "ref": "v1.0.0"
+      "ref": "latest"
     },
     {
       "id": "service.kodi-fritzbox-callmonitor",
       "url": "https://github.com/ksooo/service.kodi-fritzbox-callmonitor.git",
-      "ref": "v2.1.2"
+      "ref": "latest"
     }
   ]
 }

@@ -15,8 +15,9 @@ declares. Everything Kodi verifies gets a sibling .sha256 file, because
 GitHub Pages sends no content digest headers.
 
 Which add-ons to include comes from addons.json: per add-on its "id", the
-clone "url" and the git "ref" to publish. The repository add-on itself is
-built from src/ in the working tree.
+clone "url" and the git "ref" to publish - either a fixed tag, or "latest"
+to publish the highest version tag the add-on repository has. The repository
+add-on itself is built from src/ in the working tree.
 
 Usage: python3 tools/build_repo.py [--output DIRECTORY]
 """
@@ -131,6 +132,28 @@ def summary(addon):
     return ''
 
 
+def version_of(tag):
+    """Return the sortable version of a v<major>.<minor>.<patch> tag, or None."""
+    if not tag.startswith('v'):
+        return None
+
+    parts = tag[1:].split('.')
+    if not all(part.isdigit() for part in parts):
+        return None
+    return tuple(int(part) for part in parts)
+
+
+def latest_tag(url):
+    """Return the highest version tag of the given repository."""
+    listing = subprocess.run(['git', 'ls-remote', '--tags', '--refs', url],
+                             check=True, capture_output=True, text=True).stdout
+    tags = [tag for tag in (line.rsplit('/', 1)[-1] for line in listing.splitlines())
+            if version_of(tag) is not None]
+    if not tags:
+        raise SystemExit('{} has no version tag to publish'.format(url))
+    return max(tags, key=version_of)
+
+
 def write_sha256(path):
     """Write the digest file Kodi falls back to when no digest header arrives."""
     digest = hashlib.sha256()
@@ -144,7 +167,7 @@ def write_sha256(path):
         stream.write('{}  {}\n'.format(digest.hexdigest(), os.path.basename(path)))
 
 
-def build_addon(addon_directory, output_directory, expected_id):
+def build_addon(addon_directory, output_directory, expected_id, expected_version=None):
     """Package one add-on into the output tree and return its addon.xml root."""
     addon = ElementTree.parse(os.path.join(addon_directory, 'addon.xml')).getroot()
     addon_id = addon.get('id')
@@ -152,6 +175,10 @@ def build_addon(addon_directory, output_directory, expected_id):
     if addon_id != expected_id:
         raise SystemExit('expected the add-on {}, but its addon.xml declares {}'
                          .format(expected_id, addon_id))
+    if expected_version is not None and version != expected_version:
+        raise SystemExit('{}: the tag says version {}, but its addon.xml says {} - raise the '
+                         'version in addon.xml, or move the tag'
+                         .format(addon_id, expected_version, version))
 
     target_directory = os.path.join(output_directory, addon_id)
     os.makedirs(target_directory)
@@ -232,10 +259,18 @@ def main():
 
     with tempfile.TemporaryDirectory() as scratch:
         for entry in configuration['addons']:
+            ref = entry['ref']
+            if ref == 'latest':
+                ref = latest_tag(entry['url'])
+                print('{}: the highest version tag is {}'.format(entry['id'], ref))
+
             checkout = os.path.join(scratch, entry['id'])
-            subprocess.run(['git', 'clone', '--quiet', '--depth', '1',
-                            '--branch', entry['ref'], entry['url'], checkout], check=True)
-            addons.append(build_addon(checkout, output_directory, entry['id']))
+            # Checking out a tag detaches HEAD, which git is chatty about.
+            subprocess.run(['git', '-c', 'advice.detachedHead=false', 'clone', '--quiet',
+                            '--depth', '1', '--branch', ref, entry['url'], checkout], check=True)
+            tag_version = version_of(ref)
+            addons.append(build_addon(checkout, output_directory, entry['id'],
+                                      ref[1:] if tag_version is not None else None))
 
     write_index(addons, output_directory)
     write_landing_page(addons, repository_ids[0], output_directory)

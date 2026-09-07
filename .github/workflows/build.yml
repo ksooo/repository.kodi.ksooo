@@ -4,7 +4,16 @@ on:
   push:
     branches:
       - main
+  # Picks up a new tag in one of the add-on repositories without anything
+  # having to be pushed here.
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      force:
+        description: Deploy even when nothing has changed
+        type: boolean
+        default: false
 
 # What actions/deploy-pages needs to hand the built site to GitHub Pages.
 permissions:
@@ -16,10 +25,15 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  PAGES_URL: https://ksooo.github.io/repository.kodi.ksooo
+
 jobs:
   build:
     runs-on: ubuntu-latest
     name: Build
+    outputs:
+      deploy: ${{ steps.changed.outputs.deploy }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,13 +46,32 @@ jobs:
       - name: Build
         run: python3 tools/build_repo.py --output public
 
+      # The hourly schedule would otherwise deploy the same site over and over,
+      # burying the runs that actually released something.
+      - name: Has anything changed?
+        id: changed
+        env:
+          FORCE: ${{ inputs.force }}
+        run: |
+          published=$(curl -sf "$PAGES_URL/addons.xml.sha256" | cut -d' ' -f1 || true)
+          built=$(cut -d' ' -f1 < public/addons.xml.sha256)
+          echo "published: ${published:-<nothing>}"
+          echo "built:     $built"
+          if [ "$FORCE" = "true" ] || [ "$published" != "$built" ]; then
+            echo "deploy=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=no" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload
+        if: steps.changed.outputs.deploy == 'yes'
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
   deploy:
     needs: build
+    if: needs.build.outputs.deploy == 'yes'
     runs-on: ubuntu-latest
     name: Deploy
     environment:
