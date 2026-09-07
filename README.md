@@ -30,8 +30,7 @@ The repository add-on itself is part of the repository as well, so it can update
 
 ## Releasing a new add-on version
 
-Everything after the tag happens on its own. In the add-on's own repository, raise the version and
-describe the change, both in `addon.xml`:
+In the add-on's own repository, raise the version and describe the change, both in `addon.xml`:
 
 ```xml
 <addon id="plugin.video.notinlibrary" version="1.1.0" ...>
@@ -40,24 +39,27 @@ describe the change, both in `addon.xml`:
 ```
 
 `<news>` is what Kodi shows as the changelog in the add-on information dialog; a `changelog.txt` is
-not read any more. Then commit, tag and push both:
+not read any more. Commit that, then release from the add-on's checkout:
 
 ```sh
 git commit -am "1.1.0: What is new."
-git tag -a v1.1.0 -m "1.1.0"
-git push && git push origin v1.1.0
+python3 ../repository.kodi.ksooo/tools/release.py
 ```
 
-That is the whole release. `addons.json` pins every add-on to `latest`, so the build resolves the
-highest version tag of each add-on repository on its own. The workflow here runs hourly, picks up
-the new tag, packs it and deploys. To skip the wait, run *Build repository* from the *Actions* tab.
+The script tags HEAD with the version `addon.xml` declares, pushes the branch and the tag, asks the
+workflow here to rebuild, and waits until the new version really shows up in the published index -
+so the command only returns once the release is live, about a minute later. It refuses to release a
+dirty working tree, a detached HEAD, a branch that is behind its remote, a version that is tagged
+already, or an add-on that `addons.json` does not list.
 
-The tag has to agree with `addon.xml`: a `v1.1.0` whose `addon.xml` still says 1.0.0 fails the
-build. Missing the version bump would otherwise release nothing at all and stay quiet about it, as
-the zip would keep its name and no client would see a new version.
+Nothing polls for new tags: the rebuild happens because the script asks for it. It can also be
+started by hand from the *Actions* tab, and every push to `main` here rebuilds as well.
 
-To publish something other than the newest tag, write that tag into `addons.json` in place of
-`latest`.
+`addons.json` pins every add-on to `latest`, so the build resolves the highest version tag of each
+add-on repository on its own; to publish something older, write that tag in place of `latest`. The
+tag has to agree with `addon.xml`: a `v1.1.0` whose `addon.xml` still says 1.0.0 fails the build.
+Missing the version bump would otherwise release nothing at all and stay quiet about it, as the zip
+would keep its name and no client would see a new version.
 
 ### Adding a new add-on
 
@@ -101,12 +103,9 @@ Development material - `tests/`, `tools/`, `.github/`, `__pycache__/` and the li
 the archives, so the add-on repositories need no packaging tooling of their own.
 
 Nothing is deployed when the built `addons.xml` matches the published one, so the workflow history
-shows the runs that really released something. *Run workflow* offers a `force` switch for the rare
-case where a deploy has to be repeated anyway.
-
-The hourly schedule is what picks up a new tag. GitHub disables scheduled workflows in repositories
-that see no pushes for 60 days, so after two quiet months the schedule has to be switched back on
-in the *Actions* tab - or the first release after such a pause started by hand.
+shows the runs that really released something, and a push that only touches the README deploys
+nothing. *Run workflow* offers a `force` switch for the rare case where a deploy has to be repeated
+anyway.
 
 To build into `./public` locally, without deploying anything:
 

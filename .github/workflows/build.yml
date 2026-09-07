@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - main
-  # Picks up a new tag in one of the add-on repositories without anything
-  # having to be pushed here. Not on the hour: that is when GitHub's scheduler
-  # is busiest and delays scheduled runs the most.
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       force:
@@ -47,7 +42,7 @@ jobs:
       - name: Build
         run: python3 tools/build_repo.py --output public
 
-      # The hourly schedule would otherwise deploy the same site over and over,
+      # Keeps a push that changes nothing servable - a README edit, say - from
       # burying the runs that actually released something.
       - name: Has anything changed?
         id: changed
