@@ -5,7 +5,8 @@ on:
     branches:
       - main
   # Picks up a new tag in one of the add-on repositories without anything
-  # having to be pushed here.
+  # having to be pushed here. Not on the hour: that is when GitHub's scheduler
+  # is busiest and delays scheduled runs the most.
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
