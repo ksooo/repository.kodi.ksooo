@@ -1,6 +1,11 @@
 {
   "addons": [
     {
+      "id": "plugin.video.mediathekview.ksooo",
+      "url": "https://github.com/ksooo/plugin.video.mediathekview.git",
+      "ref": "latest"
+    },
+    {
       "id": "plugin.video.notinlibrary",
       "url": "https://github.com/ksooo/plugin.video.notinlibrary.git",
       "ref": "latest"

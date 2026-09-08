@@ -22,6 +22,7 @@ updates* does it right away.
 
 | Add-on | Description |
 | --- | --- |
+| [MediathekView (ksooo)](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
 | [Home Assistant Dashboard](https://github.com/ksooo/script.homeassistant) | Shows your Home Assistant dashboard in Kodi |
 | [FRITZ!Box Callmonitor](https://github.com/ksooo/service.kodi-fritzbox-callmonitor) | Shows information about the telephone calls routed over your FRITZ!Box |
