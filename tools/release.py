@@ -18,6 +18,11 @@ published index.
 Needs the gh CLI, logged in to the account that owns this repository.
 
 Usage: python3 tools/release.py [ADD-ON DIRECTORY]
+
+The repository add-on lives in this repository rather than in one of its own,
+so release it by naming its directory:
+
+    python3 tools/release.py src/repository.kodi.ksooo
 """
 
 import json
@@ -69,11 +74,15 @@ def published_version(slug, addon_id):
 
 def check(addon_directory, addon_id, tag):
     """Refuse to release anything but a clean, pushable, untagged state."""
+    # The same two sources build_repo.py publishes from: the add-ons cloned
+    # per addons.json, and the ones living in src/ - which is where the
+    # repository add-on itself sits.
     with open(os.path.join(ROOT, 'addons.json'), 'r', encoding='utf-8') as stream:
-        listed = [entry['id'] for entry in json.load(stream)['addons']]
-    if addon_id not in listed:
-        raise SystemExit('{} is not listed in addons.json, releasing it would publish nothing'
-                         .format(addon_id))
+        published = [entry['id'] for entry in json.load(stream)['addons']]
+    published += os.listdir(os.path.join(ROOT, 'src'))
+    if addon_id not in published:
+        raise SystemExit('{} is neither listed in addons.json nor present in src/, '
+                         'releasing it would publish nothing'.format(addon_id))
 
     if git('status', '--porcelain', cwd=addon_directory):
         raise SystemExit('{}: commit or stash your changes first'.format(addon_id))
