@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="repository.kodi.ksooo"
        name="ksooo's Kodi Add-ons"
-       version="1.0.0"
+       version="1.1.0"
        provider-name="Kai Sommerfeld">
   <requires>
     <import addon="xbmc.addon" version="19.0.0"/>
@@ -25,5 +25,11 @@
     <description lang="en_GB">Add-on repository for the Kodi add-ons written by ksooo. Once it is installed, the add-ons it holds show up in Kodi's own add-on browser, and Kodi keeps them up to date on its own.</description>
     <summary lang="de_DE">Die Kodi-Add-ons von ksooo installieren und aktualisieren</summary>
     <description lang="de_DE">Add-on-Repository für die von ksooo entwickelten Kodi-Add-ons. Nach der Installation erscheinen die enthaltenen Add-ons im Add-on-Browser von Kodi, und Kodi hält sie selbständig aktuell.</description>
+    <news>v1.1.0
+- MediathekView (ksooo) joins the repository
+
+v1.0.0
+- Initial release
+</news>
   </extension>
 </addon>

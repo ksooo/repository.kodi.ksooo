@@ -1,0 +1,5 @@
+v1.1.0
+- MediathekView (ksooo) joins the repository
+
+v1.0.0
+- Initial release

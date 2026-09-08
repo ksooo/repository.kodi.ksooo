@@ -10,7 +10,7 @@ It is served from GitHub Pages at
 ## Installation
 
 1. Download
-   [repository.kodi.ksooo-1.0.0.zip](https://ksooo.github.io/repository.kodi.ksooo/repository.kodi.ksooo/repository.kodi.ksooo-1.0.0.zip).
+   [repository.kodi.ksooo-1.1.0.zip](https://ksooo.github.io/repository.kodi.ksooo/repository.kodi.ksooo/repository.kodi.ksooo-1.1.0.zip).
 2. In Kodi, allow *Settings ▸ System ▸ Add-ons ▸ Unknown sources*.
 3. *Add-ons ▸ Install from zip file*, and pick the downloaded file.
 4. *Add-ons ▸ Install from repository ▸ ksooo's Kodi Add-ons*, and install what you want.
