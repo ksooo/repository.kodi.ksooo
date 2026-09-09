@@ -1,3 +1,6 @@
+v1.2.0
+- MediathekView (ksooo) is now called MediathekView+
+
 v1.1.0
 - MediathekView (ksooo) joins the repository
 

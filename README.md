@@ -10,7 +10,7 @@ It is served from GitHub Pages at
 ## Installation
 
 1. Download
-   [repository.kodi.ksooo-1.1.0.zip](https://ksooo.github.io/repository.kodi.ksooo/repository.kodi.ksooo/repository.kodi.ksooo-1.1.0.zip).
+   [repository.kodi.ksooo-1.2.0.zip](https://ksooo.github.io/repository.kodi.ksooo/repository.kodi.ksooo/repository.kodi.ksooo-1.2.0.zip).
 2. In Kodi, allow *Settings ▸ System ▸ Add-ons ▸ Unknown sources*.
 3. *Add-ons ▸ Install from zip file*, and pick the downloaded file.
 4. *Add-ons ▸ Install from repository ▸ ksooo's Kodi Add-ons*, and install what you want.
@@ -22,7 +22,7 @@ updates* does it right away.
 
 | Add-on | Description |
 | --- | --- |
-| [MediathekView (ksooo)](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
+| [MediathekView+](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
 | [Home Assistant Dashboard](https://github.com/ksooo/script.homeassistant) | Shows your Home Assistant dashboard in Kodi |
 | [FRITZ!Box Callmonitor](https://github.com/ksooo/service.kodi-fritzbox-callmonitor) | Shows information about the telephone calls routed over your FRITZ!Box |
