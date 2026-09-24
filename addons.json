@@ -1,6 +1,11 @@
 {
   "addons": [
     {
+      "id": "plugin.audio.amazonmedia.ksooo",
+      "url": "https://github.com/ksooo/plugin.audio.amazonmedia.ksooo.git",
+      "ref": "latest"
+    },
+    {
       "id": "plugin.video.mediathekview.ksooo",
       "url": "https://github.com/ksooo/plugin.video.mediathekview.git",
       "ref": "latest"

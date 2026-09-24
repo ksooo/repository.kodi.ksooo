@@ -22,6 +22,7 @@ updates* does it right away.
 
 | Add-on | Description |
 | --- | --- |
+| [Amazon Media](https://github.com/ksooo/plugin.audio.amazonmedia.ksooo) | Browses and plays Amazon Music with your Amazon account; playback needs Kodi for Android |
 | [MediathekView+](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
 | [Home Assistant Dashboard](https://github.com/ksooo/script.homeassistant) | Shows your Home Assistant dashboard in Kodi |
