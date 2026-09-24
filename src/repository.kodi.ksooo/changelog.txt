@@ -1,3 +1,6 @@
+v1.3.0
+- Amazon Media joins the repository
+
 v1.2.0
 - MediathekView (ksooo) is now called MediathekView+
 
