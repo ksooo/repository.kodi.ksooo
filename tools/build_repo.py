@@ -19,18 +19,24 @@ clone "url" and the git "ref" to publish - either a fixed tag, or "latest"
 to publish the highest version tag the add-on repository has. The repository
 add-on itself is built from src/ in the working tree.
 
+A binary add-on lists the "platforms" it is built for. Its zips are not built
+here but taken from the GitHub release of the tag, one per platform, and
+published under <id>+<platform>/ like in Kodi's own repository.
+
 Usage: python3 tools/build_repo.py [--output DIRECTORY]
 """
 
 import argparse
 import hashlib
 import html
+import io
 import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 import xml.etree.ElementTree as ElementTree
 import zipfile
 
@@ -208,6 +214,50 @@ def build_addon(addon_directory, output_directory, expected_id, expected_version
     return addon
 
 
+def build_binary_addon(entry, tag, output_directory):
+    """Publish the zips of a binary add-on's GitHub release and return their addon.xml roots."""
+    addon_id = entry['id']
+    version = tag[1:]
+    slug = entry['url'].removesuffix('.git').split('github.com/', 1)[1]
+
+    addons = []
+    for platform in entry['platforms']:
+        name = '{}-{}-{}.zip'.format(addon_id, version, platform)
+        url = 'https://github.com/{}/releases/download/{}/{}'.format(slug, tag, name)
+        with urllib.request.urlopen(url, timeout=60) as response:
+            data = response.read()
+
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            addon = ElementTree.fromstring(archive.read('{}/addon.xml'.format(addon_id)))
+            extension = metadata_extension(addon)
+            declared = (addon.get('id'), addon.get('version'), extension.findtext('platform'))
+            if declared != (addon_id, version, platform):
+                raise SystemExit('{}: expected {} {} for {}, but its addon.xml declares {} {} for {}'
+                                 .format(name, addon_id, version, platform, *declared))
+
+            # Kodi only shows the entry for its own platform, and with a <path> it reads the
+            # assets from the directory of the zip
+            directory = '{}+{}'.format(addon_id, platform)
+            target_directory = os.path.join(output_directory, directory)
+            os.makedirs(target_directory)
+            archive_path = os.path.join(target_directory, '{}-{}.zip'.format(addon_id, version))
+            with open(archive_path, 'wb') as stream:
+                stream.write(data)
+            write_sha256(archive_path)
+
+            for asset in declared_assets(addon):
+                target = os.path.join(target_directory, asset.replace('/', os.sep))
+                os.makedirs(os.path.dirname(target), exist_ok=True)
+                with open(target, 'wb') as stream:
+                    stream.write(archive.read('{}/{}'.format(addon_id, asset)))
+
+        ElementTree.SubElement(extension, 'path').text = '{}/{}-{}.zip'.format(
+            directory, addon_id, version)
+        print('{} {} {}'.format(addon_id, version, platform))
+        addons.append(addon)
+    return addons
+
+
 def write_index(addons, output_directory):
     """Write the addons.xml index of the given addon.xml roots."""
     index = ElementTree.Element('addons')
@@ -225,11 +275,16 @@ def write_landing_page(addons, repository_id, output_directory):
     for addon in sorted(addons, key=lambda addon: addon.get('id')):
         addon_id = addon.get('id')
         version = addon.get('version')
-        archive = '{0}/{0}-{1}.zip'.format(addon_id, version)
+        name = addon.get('name')
+        archive = metadata_extension(addon).findtext('path')
+        if archive:
+            name = '{} ({})'.format(name, metadata_extension(addon).findtext('platform'))
+        else:
+            archive = '{0}/{0}-{1}.zip'.format(addon_id, version)
         if addon_id == repository_id:
             repository_archive = archive
         rows.append('<tr><td><a href="{}">{}</a></td><td>{}</td><td>{}</td></tr>'.format(
-            archive, html.escape(addon.get('name')), html.escape(version),
+            archive, html.escape(name), html.escape(version),
             html.escape(summary(addon))))
 
     with open(os.path.join(output_directory, 'index.html'), 'w',
@@ -263,6 +318,13 @@ def main():
             if ref == 'latest':
                 ref = latest_tag(entry['url'])
                 print('{}: the highest version tag is {}'.format(entry['id'], ref))
+
+            if 'platforms' in entry:
+                if version_of(ref) is None:
+                    raise SystemExit('{}: a binary add-on needs a version tag, not {}'
+                                     .format(entry['id'], ref))
+                addons.extend(build_binary_addon(entry, ref, output_directory))
+                continue
 
             checkout = os.path.join(scratch, entry['id'])
             # Checking out a tag detaches HEAD, which git is chatty about.
