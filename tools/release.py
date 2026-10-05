@@ -48,10 +48,17 @@ TIMEOUT = 5 * 60
 INTERVAL = 15
 
 
+def run(*command, cwd=None):
+    """Run a command and return its output, or stop with the error it reported."""
+    result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise SystemExit('{} failed:\n{}'.format(' '.join(command), result.stderr.strip()))
+    return result.stdout.strip()
+
+
 def git(*arguments, cwd):
     """Run git in the given directory and return its output."""
-    return subprocess.run(('git',) + arguments, cwd=cwd, check=True,
-                          capture_output=True, text=True).stdout.strip()
+    return run('git', *arguments, cwd=cwd)
 
 
 def repository_slug(directory):
@@ -89,18 +96,16 @@ def build_release(addon_directory, tag):
                     '--field', 'tag={}'.format(tag)], check=True)
 
     # gh workflow run does not say which run it started
-    run = None
-    while run is None:
+    run_id = None
+    while run_id is None:
         time.sleep(INTERVAL)
-        runs = json.loads(subprocess.run(
-            ['gh', 'run', 'list', '--repo', slug, '--workflow', RELEASE_WORKFLOW,
-             '--event', 'workflow_dispatch', '--json', 'databaseId,createdAt'],
-            check=True, capture_output=True, text=True).stdout)
-        run = next((str(r['databaseId']) for r in runs if r['createdAt'] >= started), None)
+        runs = json.loads(run('gh', 'run', 'list', '--repo', slug, '--workflow', RELEASE_WORKFLOW,
+                              '--event', 'workflow_dispatch', '--json', 'databaseId,createdAt'))
+        run_id = next((str(r['databaseId']) for r in runs if r['createdAt'] >= started), None)
 
-    if subprocess.run(['gh', 'run', 'watch', run, '--repo', slug, '--exit-status']).returncode:
+    if subprocess.run(['gh', 'run', 'watch', run_id, '--repo', slug, '--exit-status']).returncode:
         raise SystemExit('the release workflow failed - see '
-                         'https://github.com/{}/actions/runs/{}'.format(slug, run))
+                         'https://github.com/{}/actions/runs/{}'.format(slug, run_id))
 
 
 def published_version(slug, addon_id):
