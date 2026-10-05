@@ -25,6 +25,7 @@ updates* does it right away.
 | [Amazon Media](https://github.com/ksooo/plugin.audio.amazonmedia.ksooo) | Browses and plays Amazon Music with your Amazon account; playback needs Kodi for Android |
 | [MediathekView+](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
+| [RTL-SDR DAB+ Client](https://github.com/ksooo/pvr.rtlsdr.dabplus) | Receives DAB+ digital radio with an RTL-SDR USB stick, connected directly or through an rtl_tcp server; needs Kodi 22 on Android, macOS or Windows |
 | [Home Assistant Dashboard](https://github.com/ksooo/script.homeassistant) | Shows your Home Assistant dashboard in Kodi |
 | [FRITZ!Box Callmonitor](https://github.com/ksooo/service.kodi-fritzbox-callmonitor) | Shows information about the telephone calls routed over your FRITZ!Box |
 
@@ -68,6 +69,36 @@ would keep its name and no client would see a new version.
 Add an object with its `id`, clone `url` and `ref` to `addons.json`, and push. The add-on needs no
 knowledge of this repository, and nothing in its own repository has to change.
 
+A binary add-on additionally needs `platforms` in `addons.json` and a release workflow in its own
+repository, see below. Release it right after pushing the new entry: until its first release
+exists, every build here fails, while the site keeps serving the previous state.
+
+### Binary add-ons
+
+A binary add-on such as the RTL-SDR DAB+ Client cannot be zipped from its sources: it is compiled
+once per platform, against the Kodi version it is meant for. The `release.yml` workflow in its own
+repository does that for a given tag and attaches one zip per platform to the GitHub release of
+that tag, named `<id>-<version>-<platform>.zip`.
+
+In `addons.json`, it lists the platforms it is built for:
+
+```json
+{
+  "id": "pvr.rtlsdr.dabplus",
+  "url": "https://github.com/ksooo/pvr.rtlsdr.dabplus.git",
+  "ref": "latest",
+  "platforms": ["android-aarch64", "android-armv7", "osx-arm64", "osx-x86_64",
+                "windows-arm64", "windows-i686", "windows-x86_64"]
+}
+```
+
+The build then downloads these zips from the release instead of packaging sources, and fails if
+one is missing or its `addon.xml` names another id, version or platform.
+
+Releasing works as above, with two differences: the version is read from `<id>/addon.xml.in`, as a
+binary add-on has no `addon.xml` of its own, and `release.py` first runs the add-on's `release.yml`
+and waits for it - a few minutes - before the repository rebuilds.
+
 ## When users see the update
 
 Kodi checks each repository once a day, so a release reaches an idle installation within 24 hours.
@@ -94,8 +125,14 @@ addons.xml.sha256
 <id>/<id>-<version>.zip                             the installable add-on
 <id>/<id>-<version>.zip.sha256
 <id>/<icon, screenshots as declared in addon.xml>   read from here, not from the zip
+<id>+<platform>/<id>-<version>.zip                  a binary add-on, one directory per platform
+<id>+<platform>/<id>-<version>.zip.sha256
+<id>+<platform>/<icon, screenshots>                 Kodi reads them next to that zip
 index.html                                          so the URL is useful in a browser as well
 ```
+
+The index lists a binary add-on once per platform, each entry with a `<path>` to its zip, and Kodi
+only shows the entry whose `<platform>` matches its own - the layout of Kodi's own repository.
 
 Everything Kodi verifies has a `.sha256` sibling, because GitHub Pages sends no content digest
 header for Kodi to use instead. The archives are built with a fixed member timestamp, so a given
