@@ -16,6 +16,13 @@
       "ref": "latest"
     },
     {
+      "id": "pvr.rtlsdr.dabplus",
+      "url": "https://github.com/ksooo/pvr.rtlsdr.dabplus.git",
+      "ref": "latest",
+      "platforms": ["android-aarch64", "android-armv7", "osx-arm64", "osx-x86_64",
+                    "windows-arm64", "windows-i686", "windows-x86_64"]
+    },
+    {
       "id": "script.homeassistant",
       "url": "https://github.com/ksooo/script.homeassistant.git",
       "ref": "latest"
