@@ -1,6 +1,13 @@
 {
   "addons": [
     {
+      "id": "inputstream.webrtc",
+      "url": "https://github.com/ksooo/inputstream.webrtc.git",
+      "ref": "latest",
+      "platforms": ["android-aarch64", "android-armv7", "osx-arm64", "osx-x86_64",
+                    "windows-arm64", "windows-i686", "windows-x86_64"]
+    },
+    {
       "id": "plugin.audio.amazonmedia.ksooo",
       "url": "https://github.com/ksooo/plugin.audio.amazonmedia.ksooo.git",
       "ref": "latest"

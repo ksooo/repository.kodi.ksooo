@@ -22,6 +22,7 @@ updates* does it right away.
 
 | Add-on | Description |
 | --- | --- |
+| [Inputstream WebRTC](https://github.com/ksooo/inputstream.webrtc) | Plays WebRTC live streams such as camera feeds, from WHEP servers and Home Assistant cameras; needs Kodi 22 on Android, macOS or Windows |
 | [Amazon Media](https://github.com/ksooo/plugin.audio.amazonmedia.ksooo) | Browses and plays Amazon Music with your Amazon account; playback needs Kodi for Android |
 | [MediathekView+](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
