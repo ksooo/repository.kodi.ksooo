@@ -101,7 +101,9 @@ without a complete release fails the build.
 
 Releasing works as above, with two differences: the version is read from `<id>/addon.xml.in`, as a
 binary add-on has no `addon.xml` of its own, and `release.py` first runs the add-on's `release.yml`
-and waits for it - a few minutes - before the repository rebuilds.
+and waits for it - a few minutes - before the repository rebuilds. Should that workflow fail, the
+script runs its failed jobs again, up to twice, as such failures are mostly passing ones like
+download errors.
 
 ## When users see the update
 

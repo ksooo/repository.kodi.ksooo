@@ -47,6 +47,11 @@ RELEASE_WORKFLOW = 'release.yml'
 TIMEOUT = 5 * 60
 INTERVAL = 15
 
+# A failed release workflow is run again this often, as its failures are mostly passing ones
+# like download errors
+RELEASE_RETRIES = 2
+RELEASE_RETRY_DELAY = 60
+
 
 def run(*command, cwd=None):
     """Run a command and return its output, or stop with the error it reported."""
@@ -103,9 +108,19 @@ def build_release(addon_directory, tag):
                               '--event', 'workflow_dispatch', '--json', 'databaseId,createdAt'))
         run_id = next((str(r['databaseId']) for r in runs if r['createdAt'] >= started), None)
 
-    if subprocess.run(['gh', 'run', 'watch', run_id, '--repo', slug, '--exit-status']).returncode:
-        raise SystemExit('the release workflow failed - see '
-                         'https://github.com/{}/actions/runs/{}'.format(slug, run_id))
+    for attempt in range(RELEASE_RETRIES + 1):
+        if attempt:
+            print('{}: the release workflow failed, running its failed jobs again'.format(slug))
+            time.sleep(RELEASE_RETRY_DELAY)
+            if subprocess.run(['gh', 'run', 'rerun', run_id, '--repo', slug, '--failed']).returncode:
+                break
+            # gh run watch would report the previous attempt until the run is queued again
+            time.sleep(INTERVAL)
+        if not subprocess.run(['gh', 'run', 'watch', run_id, '--repo', slug,
+                               '--exit-status']).returncode:
+            return
+    raise SystemExit('the release workflow failed - see '
+                     'https://github.com/{}/actions/runs/{}'.format(slug, run_id))
 
 
 def published_version(slug, addon_id):
