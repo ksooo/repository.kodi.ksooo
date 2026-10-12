@@ -94,7 +94,10 @@ In `addons.json`, it lists the platforms it is built for:
 ```
 
 The build then downloads these zips from the release instead of packaging sources, and fails if
-one is missing or its `addon.xml` names another id, version or platform.
+one names another id, version or platform in its `addon.xml`. With `latest`, a version whose
+release lacks a zip - while it is still being built, or after its build failed - is skipped with a
+warning in favor of the previous one, so that it does not hold up the other add-ons; a pinned tag
+without a complete release fails the build.
 
 Releasing works as above, with two differences: the version is read from `<id>/addon.xml.in`, as a
 binary add-on has no `addon.xml` of its own, and `release.py` first runs the add-on's `release.yml`

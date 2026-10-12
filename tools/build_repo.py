@@ -21,7 +21,8 @@ add-on itself is built from src/ in the working tree.
 
 A binary add-on lists the "platforms" it is built for. Its zips are not built
 here but taken from the GitHub release of the tag, one per platform, and
-published under <id>+<platform>/ like in Kodi's own repository.
+published under <id>+<platform>/ like in Kodi's own repository. With
+"latest", a version whose release lacks zips falls back to the previous one.
 
 Usage: python3 tools/build_repo.py [--output DIRECTORY]
 """
@@ -36,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ElementTree
 import zipfile
@@ -149,15 +151,19 @@ def version_of(tag):
     return tuple(int(part) for part in parts)
 
 
-def latest_tag(url):
-    """Return the highest version tag of the given repository."""
+class MissingRelease(Exception):
+    """A GitHub release lacks the zip of a platform, e.g. while it is still being built."""
+
+
+def version_tags(url):
+    """Return the version tags of the given repository, the highest first."""
     listing = subprocess.run(['git', 'ls-remote', '--tags', '--refs', url],
                              check=True, capture_output=True, text=True).stdout
     tags = [tag for tag in (line.rsplit('/', 1)[-1] for line in listing.splitlines())
             if version_of(tag) is not None]
     if not tags:
         raise SystemExit('{} has no version tag to publish'.format(url))
-    return max(tags, key=version_of)
+    return sorted(tags, key=version_of, reverse=True)
 
 
 def write_sha256(path):
@@ -220,13 +226,21 @@ def build_binary_addon(entry, tag, output_directory):
     version = tag[1:]
     slug = entry['url'].removesuffix('.git').split('github.com/', 1)[1]
 
-    addons = []
+    # Download all zips first, so that a missing one leaves nothing half written
+    archives = []
     for platform in entry['platforms']:
         name = '{}-{}-{}.zip'.format(addon_id, version, platform)
         url = 'https://github.com/{}/releases/download/{}/{}'.format(slug, tag, name)
-        with urllib.request.urlopen(url, timeout=60) as response:
-            data = response.read()
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                archives.append((platform, name, response.read()))
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                raise MissingRelease('its release has no {}'.format(name)) from error
+            raise
 
+    addons = []
+    for platform, name, data in archives:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             addon = ElementTree.fromstring(archive.read('{}/addon.xml'.format(addon_id)))
             extension = metadata_extension(addon)
@@ -256,6 +270,32 @@ def build_binary_addon(entry, tag, output_directory):
         print('{} {} {}'.format(addon_id, version, platform))
         addons.append(addon)
     return addons
+
+
+def publish_binary_addon(entry, output_directory):
+    """Publish the highest version of a binary add-on whose release has all zips.
+
+    With "latest", a version whose release is still being built, or failed to build, falls back
+    to the previous one, so that it does not hold up the other add-ons.
+    """
+    if entry['ref'] == 'latest':
+        tags = version_tags(entry['url'])
+    elif version_of(entry['ref']) is not None:
+        tags = [entry['ref']]
+    else:
+        raise SystemExit('{}: a binary add-on needs a version tag, not {}'
+                         .format(entry['id'], entry['ref']))
+
+    for tag in tags:
+        try:
+            addons = build_binary_addon(entry, tag, output_directory)
+        except MissingRelease as error:
+            # A GitHub Actions annotation, so that it shows on the summary of the run
+            print('::warning::{}: skipping {}, {}'.format(entry['id'], tag, error))
+            continue
+        print('{}: publishing {}'.format(entry['id'], tag))
+        return addons
+    raise SystemExit('{}: no version tag has a complete release'.format(entry['id']))
 
 
 def write_index(addons, output_directory):
@@ -314,17 +354,14 @@ def main():
 
     with tempfile.TemporaryDirectory() as scratch:
         for entry in configuration['addons']:
+            if 'platforms' in entry:
+                addons.extend(publish_binary_addon(entry, output_directory))
+                continue
+
             ref = entry['ref']
             if ref == 'latest':
-                ref = latest_tag(entry['url'])
+                ref = version_tags(entry['url'])[0]
                 print('{}: the highest version tag is {}'.format(entry['id'], ref))
-
-            if 'platforms' in entry:
-                if version_of(ref) is None:
-                    raise SystemExit('{}: a binary add-on needs a version tag, not {}'
-                                     .format(entry['id'], ref))
-                addons.extend(build_binary_addon(entry, ref, output_directory))
-                continue
 
             checkout = os.path.join(scratch, entry['id'])
             # Checking out a tag detaches HEAD, which git is chatty about.
