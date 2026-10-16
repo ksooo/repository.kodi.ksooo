@@ -23,6 +23,11 @@
       "ref": "latest"
     },
     {
+      "id": "plugin.video.yt",
+      "url": "https://github.com/ksooo/plugin.video.yt.git",
+      "ref": "latest"
+    },
+    {
       "id": "pvr.rtlsdr.dabplus",
       "url": "https://github.com/ksooo/pvr.rtlsdr.dabplus.git",
       "ref": "latest",

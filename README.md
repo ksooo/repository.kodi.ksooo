@@ -26,6 +26,7 @@ updates* does it right away.
 | [Amazon Media](https://github.com/ksooo/plugin.audio.amazonmedia.ksooo) | Browses and plays Amazon Music with your Amazon account; playback needs Kodi for Android |
 | [MediathekView+](https://github.com/ksooo/plugin.video.mediathekview) | Gives access to the German public service video platforms, using the MediathekView database |
 | [Not in Library](https://github.com/ksooo/plugin.video.notinlibrary) | Finds the videos in your sources that are missing from the video library |
+| [YouTube](https://github.com/ksooo/plugin.video.yt) | Brings your YouTube subscriptions, recommendations, trending, search and watch history to Kodi's video window; needs your own Google Cloud project |
 | [RTL-SDR DAB+ Client](https://github.com/ksooo/pvr.rtlsdr.dabplus) | Receives DAB+ digital radio with an RTL-SDR USB stick, connected directly or through an rtl_tcp server; needs Kodi 22 on Android, macOS or Windows |
 | [Home Assistant Dashboard](https://github.com/ksooo/script.homeassistant) | Shows your Home Assistant dashboard in Kodi |
 | [FRITZ!Box Callmonitor](https://github.com/ksooo/service.kodi-fritzbox-callmonitor) | Shows information about the telephone calls routed over your FRITZ!Box |
